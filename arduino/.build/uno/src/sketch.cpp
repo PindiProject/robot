@@ -1,5 +1,12 @@
+#include <Arduino.h>
 #include "packet.h"
 #include "def.h"
+void process(unsigned char cmd);
+void setup();
+void loop();
+#line 1 "src/sketch.ino"
+//#include "packet.h"
+//#include "def.h"
 
 #define SERIAL_BAUDRATE 57600
 #define RXTX_BUFFER_SIZE 256
@@ -50,7 +57,7 @@ void loop() {
     delay(200);
 
     // como precisamos de um ponteiro, criei essa array para facilitar a vida
-    unsigned char* data = {
+    unsigned char data[] = {
         random(STATE_MOVING_FORWARD, STATE_WAITING_CMD + 1),
 
         SENSOR_0,
