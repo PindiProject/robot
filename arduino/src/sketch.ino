@@ -1,13 +1,13 @@
 #include "packet.h"
 #include "def.h"
 
-#define SERIAL_BAUDRATE 57600
+#define SERIAL_BAUDRATE 9600
 #define RXTX_BUFFER_SIZE 256
 
 unsigned char* buffer;
 
 void process(unsigned char cmd) {
-
+    Serial.println("Processing...");
 }
 
 void setup() {
@@ -15,12 +15,20 @@ void setup() {
 }
 
 void loop() {
+    int len;
+
     // ler serial
-    int len = Serial.read();
+    if (Serial.available() > 0){ // Retorna numero de bytes lidos pela porta serial (Serial.available() para o mega)
+        len = Serial.read();
+
+        Serial.print ("Received:");
+        Serial.println (len, DEC);
+    }
 
     if(len != 3) {
         // alguma coisa deu errado. O arduíno sempre espera o pacote de comando
         // com três bytes
+        Serial.println ("Package error");
     }
 
     // ler os próximos len bytes da serial
@@ -42,6 +50,7 @@ void loop() {
     else {
         // Não chegou um pacote de comando: ou o pacote veio quebrado ou é
         // um pacote não suportado.
+        Serial.println ("Processing error");
     }
 
     packet_destroy(p);
