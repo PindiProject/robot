@@ -5,8 +5,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+
+using namespace std;
 
 #define RXTX_BUFFER_SIZE 256
+
+void print_bytes(byte* buff, int len) {
+
+	for (int i = 0; i < len; i++) {
+        cout << buff[i] << " ";
+	}
+
+    cout << endl;
+}
+
 
 int main() {
 
@@ -43,6 +56,9 @@ int main() {
             continue;
         }
         
+        cout << "Bytes lidos: ";
+        print_bytes(rx_data, bytes_read);
+        
         packet* pkt_distance = packet_create(rx_data[0], rx_data[1], rx_data + 2);
         packet* pkt_obstacle = packet_create(rx_data[4], rx_data[5], rx_data + 6);
         
@@ -58,17 +74,18 @@ int main() {
         packet_destroy(pkt_state);
         packet_destroy(pkt_distance);
         packet_destroy(pkt_obstacle);
-        
+
         tx_data = new byte[6];
         tx_data[0] = TAG_CMD;
         tx_data[1] = 1;
         tx_data[2] = cmd_direction;
-        
+
         tx_data[3] = TAG_DATA;
         tx_data[4] = 1;
         tx_data[5] = cmd_distance;
- 
+
         serial_write(fd, tx_data, 6);
+        print_bytes(tx_data, 6);
         delete[] tx_data;
 
     }
