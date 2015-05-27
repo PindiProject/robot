@@ -6,6 +6,8 @@
 #include <termios.h>
 #include <unistd.h>
 
+typedef unsigned char byte;
+
 int _set_interface_attribs (int fd, int speed, int parity)
 {
         struct termios tty;
@@ -66,7 +68,7 @@ void _set_blocking (int fd, int should_block)
 }
 
 
-int serial_open() {
+int serial_open(char* name) {
     char* port_name = SERIAL_DEVICE_NAME;
     int fd = open (port_name, O_RDWR | O_NOCTTY | O_SYNC);
 
@@ -90,8 +92,24 @@ int serial_write(int fd, unsigned char* data, int data_size) {
     return 1;
 }
 
-int serial_read(int fd, unsigned char* buffer, int buffer_size) {
+int serial_read(int fd, unsigned char* buffer, int buffer_size, int max) {
     usleep(buffer_size * 100);
-    int total_read = read(fd, buffer, buffer_size);
-    return total_read;
+    memset(buffer, 0, buffer_size);
+
+    if(max == -1) {
+        int total_read = read(fd, buffer, buffer_size);        
+        return total_read;
+    }
+    else {
+        int total_read = 0;
+        byte* tmp = new byte[buffer_size];
+
+        while(total_read < max) {
+            int bytes_read = read(fd, tmp, buffer_size);
+            memcpy(buffer + total_read, tmp, bytes_read);
+            total_read += bytes_read;
+        }
+        return total_read;
+    }
+
 }

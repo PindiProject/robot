@@ -1,2 +1,2 @@
 all:
-	gcc *.c -o bin
+	gcc *.cpp -o bin
