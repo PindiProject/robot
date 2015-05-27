@@ -152,6 +152,39 @@ DepthFirstSearch::actualizeCost(Position p, int distance, bool reverse)
 }
 
 int
+DepthFirstSearch::getDistance()
+{
+
+    Position pos;
+
+    if(pathAvailable)
+        pos = actualPosition;
+    else
+        pos = lastPosition;
+
+    std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
+    std::vector<Position> edges = positionEdges[std::make_pair(pos.x, pos.y)];
+    int direction = pos.direction;
+
+   
+    std::cout<<"Pos d: "<<direction<<std::endl;
+
+    if(direction != -2)
+    {
+        for(unsigned int i =0; i<edges.size(); i++)
+        {
+            std::cout<<edges[i].x<<" "<<edges[i].y<<std::endl;
+            std::cout<<edges[i].direction<<std::endl;
+            if(direction == edges[i].direction)
+                return edges[i].cost;
+        }   
+
+    }
+    
+    return 100;
+}    
+
+int
 DepthFirstSearch::move(bool isObstacleAhead, int distance)
 {
     if(pathAvailable)
@@ -194,6 +227,7 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
     searchSpace.pop();
 
     actualizeCost(actualPosition, distance, false);
+    lastPosition = actualPosition;
     actualPosition = pos;
 
     int x = pos.x;
@@ -260,9 +294,12 @@ DepthFirstSearch::isNeighbour(int x, int y)
 }
 
 int
-DepthFirstSearch::reverseDirection(int direction)
+DepthFirstSearch::reverseDirection(int d)
 {
-    switch(direction)
+    int direction = 0;
+    std::cout<< "Direction: "<<d<<std::endl;
+
+    switch(d)
     {
         case Position::BACK:
             direction = Position::FRONT;
@@ -369,13 +406,14 @@ DepthFirstSearch::createPathToLocation()
             int direction = temp->direction;
             int cost = temp->cost;
 
-            direction = reverseDirection(direction);
+            //direction = reverseDirection(direction);
             Position pos = Position(x, y, direction, cost);
             path.push(pos);
             temp = temp->parent; 
 
-            std::cout<<pos.x<<" "<<pos.y<<std::endl;
-            //std::cout<<path.size()<<std::endl;
+           std::cout<<pos.x<<" "<<pos.y<<std::endl;
+           // std::cout<<temp->direction<<std::endl;
+           std::cout<<pos.direction<<std::endl;
     
             if(isNeighbour(pos.x, pos.y))
                 break;
@@ -401,7 +439,10 @@ DepthFirstSearch::pathToLocation()
     {
         Position pos = path.top();
         path.pop();
+        lastPosition = actualPosition;
         actualPosition = pos;
+        std::cout<<pos.x<<" "<<pos.y<<std::endl;
+        std::cout<<pos.direction<<std::endl;
         return pos.direction;
     }    
 

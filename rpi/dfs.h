@@ -23,6 +23,7 @@ class DepthFirstSearch
         void display_visited_positions();
         int explore(bool, int);
         int move(bool, int);
+        int getDistance();
 
         int numSearchSpace();
 
@@ -55,6 +56,7 @@ class DepthFirstSearch
         Position neighbours[4];
         Position valid_neighbours[4];
         Position actualPosition;
+        Position lastPosition;
         bool pathAvailable;
 
 };
