@@ -1,16 +1,18 @@
 #ifndef POSITION_H
 #define POSITION_H
 
+#include "def.h"
+
 class Position
 {
     public:
 
         static enum Directions
         {
-            BACK = 0,
-            LEFT,
+            FRONT = CMD_MOVE_FORWARD,
+            BACK,
             RIGHT,
-            FRONT
+            LEFT
         }possible_directions;
 
         Position(int, int, int, int);

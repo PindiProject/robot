@@ -1,7 +1,7 @@
 #include "serial.h"
 
 #include <fcntl.h>
-#include <string.h>
+#include <cstring>
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
@@ -68,8 +68,8 @@ void _set_blocking (int fd, int should_block)
 }
 
 
-int serial_open(char* name) {
-    char* port_name = SERIAL_DEVICE_NAME;
+int serial_open(std::string name) {
+    const char* port_name = name.c_str();
     int fd = open (port_name, O_RDWR | O_NOCTTY | O_SYNC);
 
     if (fd < 0) {

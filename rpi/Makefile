@@ -1,2 +1,2 @@
 all:
-	gcc *.cpp -o bin
+	clang++ *.cpp -o bin
