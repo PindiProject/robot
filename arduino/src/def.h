@@ -10,20 +10,24 @@
 #define TAG_BATTERY_LEVEL   0x12
 #define TAG_BIN_STATUS      0x13
 #define TAG_CMD             0x14
+#define TAG_DATA            0x15
 
 /****************************************
  *        Macros para os pacotes        *
  ****************************************/
 
 /* Identificadores dos sensores: 1 byte */
-#define SENSOR_0 0xA0
-#define SENSOR_1 0xA1
+#define SENSOR_0 0xA0  // distancia
+#define SENSOR_1 0xA1  // obstaculo
 #define SENSOR_2 0xA2
 #define SENSOR_3 0xA3
 #define SENSOR_4 0xA4
 #define SENSOR_5 0xA5
 #define SENSOR_6 0xA6
 #define SENSOR_7 0xA7
+
+/* Identificadores de dados */
+#define DATA_DISTANCE 0xE0
 
 /* Identificadores de estado: 1 byte */
 #define STATE_UNKNOWN           0xB0
@@ -45,13 +49,13 @@
 #define BATTERY_0   0xC7
 
 /* Comandos*/
-#define CMD_KEEP_STATE    0x0
-#define CMD_MOVE_FORWARD  0x1
-#define CMD_MOVE_BACKWARD 0x2
-#define CMD_TURN_RIGHT    0x3
-#define CMD_TURN_LEFT     0x4
-#define CMD_STOP          0x5
-#define CMD_CUSTOM_0      0x6
-#define CMD_CUSTOM_1      0x7
+#define CMD_KEEP_STATE    0x00
+#define CMD_MOVE_FORWARD  0x01
+#define CMD_MOVE_BACKWARD 0x02
+#define CMD_TURN_RIGHT    0x03
+#define CMD_TURN_LEFT     0x04
+#define CMD_STOP          0x05
+#define CMD_WAKEUP        0x06
+#define CMD_START         0x07
 
 #endif
