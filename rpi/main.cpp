@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <iostream>
 
+#include <unistd.h>
+
 using namespace std;
 
 #define RXTX_BUFFER_SIZE 256
@@ -21,7 +23,8 @@ void print_bytes(byte* buff, int len) {
 }
 
 
-int main() {
+int main() {    
+    cout << "Init" << endl;
 
     byte* tx_data;
     byte* rx_data;
@@ -32,14 +35,32 @@ int main() {
     }
     
     int fd = serial_open();
+
+    if(fd < 0) {
+        cout << "Could not open serial" << endl;
+        return 1;
+    }
+
+    cout << "Serial opened: fd=" << fd << endl;
     /* handshake*/
     // send: TAG_CMD, 1, CMD_WAKEUP
-    tx_data = new byte[3];
-    tx_data[0] = TAG_CMD;
-    tx_data[1] = 1;
-    tx_data[3] = CMD_WAKEUP;
+    tx_data = new byte[1];
+    tx_data[0] = CMD_WAKEUP; //TAG_CMD;
+//    tx_data[1] = 1;
+  //  tx_data[2] = CMD_WAKEUP;
     
-    serial_write(fd, tx_data, 3);
+    cout << "Sending handshake" << endl;
+    byte* ack = new byte[1];
+    ack[0] = 0;
+    
+    while(ack[0] == 0) {
+        cout << "Trying..." << endl;
+        serial_write(fd, tx_data, 1);
+        usleep(1000);
+        serial_read(fd, ack, 1);
+    }
+    
+    delete[] ack;
     
     DepthFirstSearch* dfs = new DepthFirstSearch();
     dfs->init(0,0); // TODO
@@ -50,7 +71,9 @@ int main() {
         // read: TAG_DEVICE_STATE, 1, STATE_WAITING_CMD
         //       TAG_SENSOR_DATA, 2, SENSOR_0, distancia
         //       TAG_SENSOR_DATA, 2, SENSOR_1, obstáculo
+        cout << "Waiting data..." << endl;
         int bytes_read = serial_read(fd, rx_data, RXTX_BUFFER_SIZE, 8);
+
         if(bytes_read != 8) {
             // alguma coisa deu errado
             continue;
@@ -71,7 +94,7 @@ int main() {
         byte cmd_direction = dfs->move(obstacle, distance) & 0xFF;
         byte cmd_distance = dfs->getDistance() & 0XFF;
 
-        packet_destroy(pkt_state);
+        //packet_destroy(pkt_state);
         packet_destroy(pkt_distance);
         packet_destroy(pkt_obstacle);
 

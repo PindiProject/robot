@@ -18,14 +18,14 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 #define CHECK STATE_WAITING_CMD
 
 int PulseTime;
-int Step_size = 500;
+int Step_size = 50;
 int Distance;
 unsigned char Step_Distance;
 long Cmd;
 int Big_step=0;
 int Degree=0;
 int state = FORWARD;
-unsigned char Wakeup;
+unsigned char Wakeup = 0;
 unsigned char Obstacle = 0;
 unsigned char *outBuffer = (unsigned char *) malloc(8*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
@@ -33,8 +33,9 @@ unsigned char rpiDirection;
 
 void setup()
 {
-    Serial.begin(9600); 
- 
+    Serial.begin(57600); 
+    pinMode(13, OUTPUT);
+    
     // Configure motor pins
     stepper_RIGHT.setSpeed(10);
     stepper_LEFT.setSpeed(10);
@@ -43,21 +44,27 @@ void setup()
     pinMode(initPin, OUTPUT);
     pinMode(echoPin, INPUT);
 
-    while (!Serial.available()){
-        // Do nothing if no data is sent
+/*    while(Serial.available() == 0) {
+        digitalWrite(13, HIGH);
+        delay(50);
+        digitalWrite(13, LOW);
+        delay(50);
+    }*/
+
+    while(Wakeup != CMD_WAKEUP){
+        digitalWrite(13, HIGH);
+        Wakeup = Serial.read();
+        delay(50);
     }
 
-    while(Serial.available() > 0){
-        Wakeup = Serial.read();
-        if(Wakeup == CMD_WAKEUP){
-            break;
-        }
-    }
+    Serial.write(0xFF);
+    digitalWrite(13, LOW);
 }
   
 void loop()
 {
-
+        
+    //Serial.write(0x99);
     readUltrasonic(); // read and store the measured distances
     stateMachine();
 
@@ -92,13 +99,13 @@ void stateMachine()
         *(outBuffer) = TAG_SENSOR_DATA;
         *(outBuffer+1) = 2;
         *(outBuffer+2) = SENSOR_0;
-        *(outBuffer+3) = Step_Distance;
+        *(outBuffer+3) = 1; //Step_Distance;
 
         // Obstacle info
         *(outBuffer+4) = TAG_SENSOR_DATA;
         *(outBuffer+5) = 2;
         *(outBuffer+6) = SENSOR_1;
-        *(outBuffer+7) = Obstacle;
+        *(outBuffer+7) = 1; //Obstacle;
 
         Serial.write(outBuffer,8);
         delay(100);

@@ -5,6 +5,9 @@
 #include <errno.h>
 #include <termios.h>
 #include <unistd.h>
+#include <iostream>
+
+using namespace std;
 
 typedef unsigned char byte;
 
@@ -106,6 +109,7 @@ int serial_read(int fd, unsigned char* buffer, int buffer_size, int max) {
 
         while(total_read < max) {
             int bytes_read = read(fd, tmp, buffer_size);
+            cout << "Entrou aqui :" << bytes_read << endl;
             memcpy(buffer + total_read, tmp, bytes_read);
             total_read += bytes_read;
         }
