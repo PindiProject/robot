@@ -10,8 +10,8 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 //#define speedMotorB 11
 
 // Pin definitions for HC-SR04
-#define echoPin 8              // the SRF05's echo pin
-#define initPin 9              // the SRF05's init pin
+#define echoPin 12              // the SRF05's echo pin
+#define initPin 13              // the SRF05's init pin
 
 // Define states
 #define FORWARD STATE_MOVING_FORWARD
