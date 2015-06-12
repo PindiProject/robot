@@ -13,23 +13,29 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 #define echoPin 12              // the SRF05's echo pin
 #define initPin 13              // the SRF05's init pin
 
+#define TURN_DISTANCE 31.41592    // CM
+#define STEP_ANGLE 360.0 / 200.0  // CM
+
 // Define states
 #define FORWARD STATE_MOVING_FORWARD
 #define CHECK STATE_WAITING_CMD
 
 int PulseTime;
-int Step_size = 50;
+unsigned char DistanceReceived;
+int Step_size = 200;
 int Distance;
-unsigned char Step_Distance;
+unsigned short Step_Distance;
 long Cmd;
 int Big_step=0;
 int Degree=0;
 int state = FORWARD;
 unsigned char Wakeup = 0;
 unsigned char Obstacle = 0;
-unsigned char *outBuffer = (unsigned char *) malloc(8*sizeof(outBuffer));
+unsigned char *outBuffer = (unsigned char *) malloc(9*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
 unsigned char rpiDirection;
+unsigned char currentDirection = CMD_MOVE_FORWARD;
+int change  = 0;
 
 void setup()
 {
@@ -76,15 +82,18 @@ void stateMachine()
     unsigned char inByte;
 
     if(state == FORWARD){ // no obstacles detected
+        
         // if there's something in front of us
         for (Big_step=0; Big_step<Step_size; Big_step++){
+            //if(Big_step % 20 == 0) {
+            //    readUltrasonic();
+            //}
             if(Distance > 15 || Distance < 0){
                 moveForward();
+                Step_Distance = (TURN_DISTANCE * Big_step) / 200.0;
             }
             // there's an object in front of it
             else{
-                // Make the motor stop by leaving the loop.
-                Step_Distance = 2*3.1415*r*Big_step;
                 Obstacle = 1;
                 break;
             }
@@ -97,17 +106,18 @@ void stateMachine()
         // Sending data
         // Distance info
         *(outBuffer) = TAG_SENSOR_DATA;
-        *(outBuffer+1) = 2;
+        *(outBuffer+1) = 3;
         *(outBuffer+2) = SENSOR_0;
-        *(outBuffer+3) = 1; //Step_Distance;
+        *(outBuffer+3) = 0;//(Step_Distance & 0xFF00) >> 8; //Step_Distance;
+        *(outBuffer+4) = Step_Distance & 0x00FF; //Step_Distance;
 
         // Obstacle info
-        *(outBuffer+4) = TAG_SENSOR_DATA;
-        *(outBuffer+5) = 2;
-        *(outBuffer+6) = SENSOR_1;
-        *(outBuffer+7) = 1; //Obstacle;
+        *(outBuffer+5) = TAG_SENSOR_DATA;
+        *(outBuffer+6) = 2;
+        *(outBuffer+7) = SENSOR_1;
+        *(outBuffer+8) = Obstacle == 1 ? '0' : '1'; //Obstacle;
 
-        Serial.write(outBuffer,8);
+        Serial.write(outBuffer,9);
         delay(100);
         
         // Waiting for instructions
@@ -124,21 +134,38 @@ void stateMachine()
         }
 
         rpiDirection = *(inBuffer+2);
-        Step_size = *(inBuffer+5);
+        
+        if(rpiDirection != currentDirection)
+            change = 1;
+        
+        DistanceReceived = *(inBuffer+5);
+        Step_size = (200 * DistanceReceived) / 32;
+        //DistanceReceived = Step_size - '0';
 
-        if (rpiDirection == CMD_TURN_RIGHT){ // Considering 200 makes 90 degrees
+        if (rpiDirection == CMD_TURN_RIGHT && change){ // Considering 200 makes 90 degrees
             for(Degree=200; Degree>0; Degree--)
                 turnRight();
+                
+            change = 0;    
+                
         }
-        else if (rpiDirection == CMD_TURN_LEFT){
+        else if (rpiDirection == CMD_TURN_LEFT && change){
             for(Degree=200; Degree>0; Degree--)
                 turnLeft();
+                
+            change = 0;    
         }
-        else if (rpiDirection == CMD_MOVE_BACKWARD){
+        else if (rpiDirection == CMD_MOVE_BACKWARD && change){
             for(Degree=2*200; Degree>0; Degree--)
                 turnLeft();
+                
+            //for(int i =0; i<200; i++)
+              //  moveForward();    
+                
+            change = 0;    
         }
     
+        currentDirection = rpiDirection;
         state = FORWARD;
         Obstacle = 0;
     }

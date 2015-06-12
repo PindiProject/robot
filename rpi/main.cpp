@@ -16,7 +16,7 @@ using namespace std;
 void print_bytes(byte* buff, int len) {
 
 	for (int i = 0; i < len; i++) {
-        cout << buff[i] << " ";
+        cout << (int) buff[i] << " ";
 	}
 
     cout << endl;
@@ -63,7 +63,7 @@ int main() {
     delete[] ack;
     
     DepthFirstSearch* dfs = new DepthFirstSearch();
-    dfs->init(0,0); // TODO
+    dfs->init(25, 25); // TODO
 
     /* main loop */
     
@@ -72,9 +72,9 @@ int main() {
         //       TAG_SENSOR_DATA, 2, SENSOR_0, distancia
         //       TAG_SENSOR_DATA, 2, SENSOR_1, obstáculo
         cout << "Waiting data..." << endl;
-        int bytes_read = serial_read(fd, rx_data, RXTX_BUFFER_SIZE, 8);
+        int bytes_read = serial_read(fd, rx_data, RXTX_BUFFER_SIZE, 9);
 
-        if(bytes_read != 8) {
+        if(bytes_read != 9) {
             // alguma coisa deu errado
             continue;
         }
@@ -83,16 +83,25 @@ int main() {
         print_bytes(rx_data, bytes_read);
         
         packet* pkt_distance = packet_create(rx_data[0], rx_data[1], rx_data + 2);
-        packet* pkt_obstacle = packet_create(rx_data[4], rx_data[5], rx_data + 6);
+        packet* pkt_obstacle = packet_create(rx_data[5], rx_data[6], rx_data + 7);
         
         //TODO verificar integridade dos pacotes
         
-        bool obstacle = pkt_obstacle->value[1] == 1;
-        int distance = pkt_distance->value[1];
+        bool obstacle = pkt_obstacle->value[1] == 49;
+
+        unsigned char b_low, b_high;
+        b_high = pkt_distance->value[1];
+        b_low = pkt_distance->value[2];
+        
+        int distance = (b_high << 8) | b_low;
+        //cout << "obst: " << obstacle << ": " << (int) pkt_obstacle->value[3] << endl;
+        //cout << "dist: " << distance << ": bh=" << (int) b_high << "; bl=" << (int) b_low << endl;
         
         // processa no algoritmo: tocado pelo pai
         byte cmd_direction = dfs->move(obstacle, distance) & 0xFF;
-        byte cmd_distance = dfs->getDistance() & 0XFF;
+        byte cmd_distance = dfs->getDistance();// & 0XFF;
+        
+        cout << "cmd_d:" << (int) cmd_distance << endl;
 
         //packet_destroy(pkt_state);
         packet_destroy(pkt_distance);

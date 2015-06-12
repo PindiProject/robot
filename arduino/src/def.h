@@ -37,6 +37,7 @@
 #define STATE_TURNING_LEFT      0xB4
 #define STATE_STOPPED           0xB5
 #define STATE_WAITING_CMD       0xB6
+#define STATE_SYNC              0xB7
 
 /* Níveis de bateria */
 #define BATTERY_100 0xC0
