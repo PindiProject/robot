@@ -17,16 +17,13 @@ int Step_size = 200;
 int Distance;
 unsigned char Obstacle = 0;
 unsigned char currentDirection = CMD_MOVE_FORWARD;
-unsigned char inByte;
-unsigned char rpiDirection;
-int NSteps;
 
 void setup()
 {
     unsigned char Wakeup = 0;
 
-    Serial.begin(9600);
-    
+    Serial.begin(57600);
+
     // Configure motor speed 
     stepper_RIGHT.setSpeed(20);
     stepper_LEFT.setSpeed(20);
@@ -40,12 +37,15 @@ void setup()
     //    delay(50);
     //}
 
-    //Serial.write(0xFF);
+    Serial.write(0xFF);
 }
 
 void loop()
 {
     int len = 0;
+    unsigned char inByte;
+    unsigned char rpiDirection;
+    int NSteps;
 
     // Move forward checking for obstacles
     for (NSteps=1; NSteps<=Step_size; NSteps++){
@@ -87,34 +87,27 @@ void loop()
 
     // Getting instructions
     while(Serial.available() > 0){
-    	Serial.println("Waiting for instructions");
         inByte = Serial.read();
         *(inBuffer + len) = inByte;
         len++;
         delay(200); // Arduino was looping to fast, available needs more time
     }
-    Serial.println("Instructions received");
-    
-    rpiDirection =(char) *(inBuffer);//*(inBuffer+2); TODO just a test
+
+    rpiDirection = *(inBuffer);//*(inBuffer+2); TODO just a test
     //stepsReceived = *(inBuffer+5);
-    Step_size = 50; //TODO this is temporary, it should convert the stepsReceived to int
+    Step_size = 200; //TODO this is temporary, it should convert the stepsReceived to int
 
     // Turn to desired direction
-    if(rpiDirection != currentDirection){//TODO isso tá zuado porra
-        directionDecision();    
-//        if (rpiDirection == 'a'){//CMD_TURN_RIGHT) TODO just a test
-//            turnRight();
-//            Serial.println("Turned right");
-//            }
-//        else if (rpiDirection == 'b'){//CMD_TURN_LEFT) TODO just a test
-//            turnLeft();
-//            Serial.println("Turned Left");
-//            }
-//        else if (rpiDirection == 'c'){//CMD_MOVE_BACKWARD) TODO just a test
-//            turnBack();
-//	    Serial.println("Turned back");
-//	    }
-//        currentDirection = rpiDirection;
+    if(rpiDirection != currentDirection){
+        Serial.println(rpiDirection);
+        if (rpiDirection == 'a')//CMD_TURN_RIGHT) TODO just a test
+            turnRight();
+        else if (rpiDirection == 'b')//CMD_TURN_LEFT) TODO just a test
+            turnLeft();
+        else if (rpiDirection == 'c')//CMD_MOVE_BACKWARD) TODO just a test
+            turnBack();
+
+        currentDirection = rpiDirection;
         Obstacle = 0;
     }
     // Keep going if previous direction is the same as new direction
@@ -165,74 +158,4 @@ void moveForward()
 {
     stepper_RIGHT.step(1);
     stepper_LEFT.step(1);
-}
-void directionDecision()
-{
-    switch (currentDirection){
-	case 'n':
-    	switch(rpiDirection){
-    	    case 's': 
-		turnBack();
-		Serial.println("Turned back");
-	    break;
-	    case 'l': 
-		turnRight();
-		Serial.println("Turned Right");
-	    break;
-	    case 'o': 
-		turnLeft();
-		Serial.println("Turned left");
-	    break;		
-	}
-	break;	
-	case 's':
-	switch(rpiDirection){
-	    case 'n': 
-		turnBack();
-		Serial.println("Turned back");
-	    break;
-	    case 'o': 
-		turnRight();
-		Serial.println("Turned Right");
-	    break;
-	    case 'l': 
-		turnLeft();
-		Serial.println("Turned left");
-	    break;
-	}
-	break;
-	case 'l':
-	switch(rpiDirection){
-	    case 'o': 
-		turnBack();
-		Serial.println("Turned back");
-	    break;
-	    case 's': 
-		turnRight();
-		Serial.println("Turned Right");
-	    break;
-	    case 'n': 
-		turnLeft();
-		Serial.println("Turned left");
-	    break;
-	}
-	break;
-	case 'o':	
-	switch(rpiDirection){
-	    case 'l': 
-		turnBack();
-		Serial.println("Turned back");
-	    break;
-	    case 'n': 
-		turnRight();
-		Serial.println("Turned Right");
-	    break;
-	    case 's': 
-		turnLeft();
-		Serial.println("Turned left");
-            break;
-	}
-	break;
-    }
-	currentDirection=rpiDirection;
 }
