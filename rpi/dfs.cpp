@@ -162,7 +162,7 @@ DepthFirstSearch::getDistance()
     if(pathAvailable)
         pos = actualPosition;
     else
-        return 32; //pos = lastPosition;
+        return 200; //pos = lastPosition;
 
 //    std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
     std::vector<Position> edges = positionEdges[std::make_pair(pos.x, pos.y)];
@@ -262,7 +262,7 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
             continue;
 
         std::cout<<tempx<<" "<<tempy<<std::endl;
-        Position p = Position(tempx, tempy, direction, 32);
+        Position p = Position(tempx, tempy, direction, 200);
         positionEdges[std::make_pair(x, y)].push_back(p);
         
         if(visitedPositions[tempx][tempy] == 1)

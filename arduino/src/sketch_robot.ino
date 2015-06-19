@@ -11,6 +11,8 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 #define echoPin 12              // the SRF05's echo pin
 #define initPin 13              // the SRF05's init pin
 
+#define SPEED 20
+
 unsigned char *outBuffer = (unsigned char *) malloc(9*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
 int Step_size = 200;
@@ -25,32 +27,33 @@ void setup()
 {
     unsigned char Wakeup = 0;
 
-    Serial.begin(9600);
+    Serial.begin(57600);
     
     // Configure motor speed 
-    stepper_RIGHT.setSpeed(20);
-    stepper_LEFT.setSpeed(20);
+    stepper_RIGHT.setSpeed(SPEED);
+    stepper_LEFT.setSpeed(SPEED);
 
     // Configure ultrasound pins
     pinMode(initPin, OUTPUT);
     pinMode(echoPin, INPUT);
 
-    //while(Wakeup != CMD_WAKEUP){
-    //    Wakeup = Serial.read();
-    //    delay(50);
-    //}
+    while(Wakeup != CMD_WAKEUP){
+        Wakeup = Serial.read();
+        delay(50);
+    }
 
-    //Serial.write(0xFF);
+    Serial.write(0xFF);
 }
 
 void loop()
 {
     int len = 0;
-
+    // Check whether there's something in front of us
+    readUltrasonic(); // read and store the measured distances
+	    
     // Move forward checking for obstacles
     for (NSteps=1; NSteps<=Step_size; NSteps++){
-	// Check whether there's something in front of us
-	readUltrasonic(); // read and store the measured distances
+
         if(Distance > 10 || Distance < 0)
 	    // Moves one step forward
 	    moveForward();
@@ -68,8 +71,8 @@ void loop()
     *(outBuffer) = TAG_SENSOR_DATA;
     *(outBuffer+1) = 3;
     *(outBuffer+2) = SENSOR_0;
-    *(outBuffer+3) = 0;//(NSteps & 0xFF00) >> 8; //NSteps;
-    *(outBuffer+4) = NSteps; //TODO Previuosly it was unsigned short, now it is int
+    *(outBuffer+3) = (NSteps & 0xFF00) >> 8; //NSteps;
+    *(outBuffer+4) = NSteps & 0x00FF; //TODO Previuosly it was unsigned short, now it is int
 
     // Obstacle info
     *(outBuffer+5) = TAG_SENSOR_DATA;
@@ -87,34 +90,20 @@ void loop()
 
     // Getting instructions
     while(Serial.available() > 0){
-    	Serial.println("Waiting for instructions");
+    	//Serial.println("Waiting for instructions");
         inByte = Serial.read();
         *(inBuffer + len) = inByte;
         len++;
         delay(200); // Arduino was looping to fast, available needs more time
     }
-    Serial.println("Instructions received");
+    //Serial.println("Instructions received");
     
-    rpiDirection =(char) *(inBuffer);//*(inBuffer+2); TODO just a test
-    //stepsReceived = *(inBuffer+5);
-    Step_size = 50; //TODO this is temporary, it should convert the stepsReceived to int
+    rpiDirection = *(inBuffer+2);// TODO just a test
+    Step_size = *(inBuffer+5);
 
     // Turn to desired direction
     if(rpiDirection != currentDirection){//TODO isso tá zuado porra
         directionDecision();    
-//        if (rpiDirection == 'a'){//CMD_TURN_RIGHT) TODO just a test
-//            turnRight();
-//            Serial.println("Turned right");
-//            }
-//        else if (rpiDirection == 'b'){//CMD_TURN_LEFT) TODO just a test
-//            turnLeft();
-//            Serial.println("Turned Left");
-//            }
-//        else if (rpiDirection == 'c'){//CMD_MOVE_BACKWARD) TODO just a test
-//            turnBack();
-//	    Serial.println("Turned back");
-//	    }
-//        currentDirection = rpiDirection;
         Obstacle = 0;
     }
     // Keep going if previous direction is the same as new direction
@@ -169,67 +158,67 @@ void moveForward()
 void directionDecision()
 {
     switch (currentDirection){
-	case 'n':
+	case CMD_MOVE_FORWARD:
     	switch(rpiDirection){
-    	    case 's': 
+    	    case CMD_MOVE_BACKWARD: 
 		turnBack();
-		Serial.println("Turned back");
+		//Serial.println("Turned back");
 	    break;
-	    case 'l': 
+	    case CMD_TURN_RIGHT: 
 		turnRight();
-		Serial.println("Turned Right");
+		//Serial.println("Turned Right");
 	    break;
-	    case 'o': 
+	    case CMD_TURN_LEFT: 
 		turnLeft();
-		Serial.println("Turned left");
+		//Serial.println("Turned left");
 	    break;		
 	}
 	break;	
-	case 's':
+	case CMD_MOVE_BACKWARD:
 	switch(rpiDirection){
-	    case 'n': 
+	    case CMD_MOVE_FORWARD: 
 		turnBack();
-		Serial.println("Turned back");
+		//Serial.println("Turned back");
 	    break;
-	    case 'o': 
+	    case CMD_TURN_LEFT: 
 		turnRight();
-		Serial.println("Turned Right");
+		//Serial.println("Turned Right");
 	    break;
-	    case 'l': 
+	    case CMD_TURN_RIGHT: 
 		turnLeft();
-		Serial.println("Turned left");
+		//Serial.println("Turned left");
 	    break;
 	}
 	break;
-	case 'l':
+	case CMD_TURN_RIGHT:
 	switch(rpiDirection){
-	    case 'o': 
+	    case CMD_TURN_LEFT: 
 		turnBack();
-		Serial.println("Turned back");
+		//Serial.println("Turned back");
 	    break;
-	    case 's': 
+	    case CMD_MOVE_BACKWARD: 
 		turnRight();
-		Serial.println("Turned Right");
+		//Serial.println("Turned Right");
 	    break;
-	    case 'n': 
+	    case CMD_MOVE_FORWARD: 
 		turnLeft();
-		Serial.println("Turned left");
+		//Serial.println("Turned left");
 	    break;
 	}
 	break;
-	case 'o':	
+	case CMD_TURN_LEFT:	
 	switch(rpiDirection){
-	    case 'l': 
+	    case CMD_TURN_RIGHT: 
 		turnBack();
-		Serial.println("Turned back");
+		//Serial.println("Turned back");
 	    break;
-	    case 'n': 
+	    case CMD_MOVE_FORWARD: 
 		turnRight();
-		Serial.println("Turned Right");
+		//Serial.println("Turned Right");
 	    break;
-	    case 's': 
+	    case CMD_MOVE_BACKWARD: 
 		turnLeft();
-		Serial.println("Turned left");
+		//Serial.println("Turned left");
             break;
 	}
 	break;
