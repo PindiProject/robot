@@ -1,6 +1,7 @@
-#include "dfs.h"
 #include <cstdlib>
 #include <iostream>
+
+#include "dfs.hpp"
 
 const int DepthFirstSearch::INCREASING_SIZE = 50;
 
@@ -9,8 +10,8 @@ DepthFirstSearch::PositionComparison::PositionComparison(Position _targetPositio
     targetPosition = _targetPosition;
 }
 
-int 
-DepthFirstSearch::PositionComparison::calculateHeuristic(const int& row, const int& column) const
+int DepthFirstSearch::PositionComparison::calculateHeuristic(
+                                      const int& row, const int& column) const
 {
     int distance = 1;
 
@@ -20,9 +21,9 @@ DepthFirstSearch::PositionComparison::calculateHeuristic(const int& row, const i
     return distance * (dx+dy);
 }    
 
-
-bool
-DepthFirstSearch::PositionComparison::operator() (const Position& p1, const Position& p2) const
+bool DepthFirstSearch::PositionComparison::operator() (
+                                                      const Position& p1,
+                                                      const Position& p2) const
 {
 
     int relativeCost1 = p1.cost + calculateHeuristic(p1.x, p1.y);
@@ -38,16 +39,13 @@ DepthFirstSearch::PositionComparison::operator() (const Position& p1, const Posi
         return false;
 
 }
-        
-
 
 DepthFirstSearch::DepthFirstSearch():pathAvailable(false)
 {
 
 }
 
-void 
-DepthFirstSearch::display_visited_positions()
+void DepthFirstSearch::display_visited_positions()
 {
     int row, column;
 
@@ -68,8 +66,7 @@ DepthFirstSearch::display_visited_positions()
 
 }   
 
-int
-DepthFirstSearch::init(int x, int y)
+int DepthFirstSearch::init(int x, int y)
 {
     int cost = 0;
     Position pos = Position(x, y, Position::FRONT, cost);
@@ -77,7 +74,7 @@ DepthFirstSearch::init(int x, int y)
     
     visitedPositions.resize(INCREASING_SIZE);
 
-    for(int i =0; i<INCREASING_SIZE; i++)
+    for(int i = 0; i<INCREASING_SIZE; i++)
         visitedPositions[i].resize(INCREASING_SIZE);
 
     visitedPositions[x][y] = 1;
@@ -90,9 +87,7 @@ DepthFirstSearch::init(int x, int y)
     return 0;
 }
 
-
-void
-DepthFirstSearch::defineStateOrder(int direction)
+void DepthFirstSearch::defineStateOrder(int direction)
 {
     switch(direction)
     {
@@ -126,12 +121,11 @@ DepthFirstSearch::defineStateOrder(int direction)
 
          default:
             break;
-    }     
-           
+    }
+
 }
 
-void
-DepthFirstSearch::actualizeCost(Position p, int distance, bool reverse)
+void DepthFirstSearch::actualizeCost(Position p, int distance, bool reverse)
 {
     int x = p.x;
     int y = p.y;
@@ -153,8 +147,7 @@ DepthFirstSearch::actualizeCost(Position p, int distance, bool reverse)
 
 }
 
-int
-DepthFirstSearch::getDistance()
+int DepthFirstSearch::getDistance()
 {
 
     Position pos;
@@ -186,8 +179,7 @@ DepthFirstSearch::getDistance()
     return 32;
 }    
 
-int
-DepthFirstSearch::move(bool isObstacleAhead, int distance)
+int DepthFirstSearch::move(bool isObstacleAhead, int distance)
 {
     if(pathAvailable)
     {
@@ -211,14 +203,13 @@ DepthFirstSearch::move(bool isObstacleAhead, int distance)
             pathAvailable = true;
             return pathToLocation();
         }
-            
+
     }
     else
         return -2;
 }
 
-int
-DepthFirstSearch::explore(bool isObstacleAhead, int distance)
+int DepthFirstSearch::explore(bool isObstacleAhead, int distance)
 {
     std::cout<<"EXPLORE"<<std::endl;
 
@@ -280,8 +271,7 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
 
 }
 
-bool
-DepthFirstSearch::isNeighbour(int x, int y)
+bool DepthFirstSearch::isNeighbour(int x, int y)
 {
 
     for(int i =0;i<4; i++)
@@ -298,8 +288,7 @@ DepthFirstSearch::isNeighbour(int x, int y)
     return false;
 }
 
-int
-DepthFirstSearch::reverseDirection(int d)
+int DepthFirstSearch::reverseDirection(int d)
 {
     int direction = 0;
     //std::cout<< "Direction: "<<d<<std::endl;
@@ -327,16 +316,16 @@ DepthFirstSearch::reverseDirection(int d)
     }
 
     return direction;
-}    
+}
 
-void
-DepthFirstSearch::createPathToLocation()
+void DepthFirstSearch::createPathToLocation()
 {
-
     Position targetPos = nextPositionData();
-    std::cout<<"PATH TO LOCATION"<<std::endl;
-    std::cout<<"actual position: \nX: "<<actualPosition.x<<"\nY: "<<actualPosition.y<<std::endl;
-    std::cout<<"\ntarget position: \nX: "<<targetPos.x<<"\nY: "<<targetPos.y<<std::endl;
+    std::cout << "PATH TO LOCATION" << std::endl;
+    std::cout << "actual position: \nX: " << actualPosition.x <<
+                 "\nY: "<<actualPosition.y<<std::endl;
+    std::cout << "\ntarget position: \nX: " << targetPos.x <<
+                 "\nY: " << targetPos.y << std::endl;
 
     std::priority_queue<Position, std::vector<Position> , PositionComparison > space((PositionComparison(targetPos)));
     std::vector< std::vector<int> > visited_nodes;
@@ -427,14 +416,13 @@ DepthFirstSearch::createPathToLocation()
     }
 
     for(unsigned int i =0; i<closed.size();i++)
-        delete closed[i];   
+        delete closed[i];
 
 }
 
-int
-DepthFirstSearch::pathToLocation()
+int DepthFirstSearch::pathToLocation()
 {
-    
+
     if(path.empty())
     {
         pathAvailable = false;
@@ -449,12 +437,11 @@ DepthFirstSearch::pathToLocation()
         std::cout<<pos.x<<" "<<pos.y<<std::endl;
         //std::cout<<pos.direction<<std::endl;
         return pos.direction;
-    }    
+    }
 
 }
 
-int
-DepthFirstSearch::nextPosition()
+int DepthFirstSearch::nextPosition()
 {
     //std::cout<<"\n\n"<<( isNeighbour() == true ? "true" : "false")<<std::endl;
 
@@ -462,7 +449,6 @@ DepthFirstSearch::nextPosition()
     {
         if(pathAvailable)
             return pathToLocation();
-
 
         Position pos = nextPositionData();
 
@@ -475,14 +461,13 @@ DepthFirstSearch::nextPosition()
             createPathToLocation();
             return pathToLocation();
         }
-            
+
     }
     else
         return -1;
-}    
+}
 
-Position
-DepthFirstSearch::nextPositionData()
+Position DepthFirstSearch::nextPositionData()
 {
     if(pathAvailable)
         return actualPosition;
@@ -492,8 +477,7 @@ DepthFirstSearch::nextPositionData()
         return Position(0, 0,Position::FRONT, 0);
 }    
 
-int
-DepthFirstSearch::numSearchSpace()
+int DepthFirstSearch::numSearchSpace()
 {
     return searchSpace.size();
 }

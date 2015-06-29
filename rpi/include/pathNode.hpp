@@ -1,5 +1,5 @@
-#ifndef PATH_NODE_H
-#define PATH_NODE_H
+#ifndef _PATH_NODE_HPP_
+#define _PATH_NODE_HPP_
 
 class PathNode
 {
