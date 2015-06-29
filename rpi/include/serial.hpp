@@ -1,5 +1,5 @@
-#ifndef _SERIAL_H
-#define _SERIAL_H
+#ifndef _SERIAL_HPP_
+#define _SERIAL_HPP_
 
 #define SERIAL_DEVICE_NAME "/dev/ttyACM0"
 #define SERIAL_DEVICE_BAUDRATE B57600

@@ -1,7 +1,7 @@
-#ifndef POSITION_H
-#define POSITION_H
+#ifndef _POSITION_HPP_
+#define _POSITION_HPP_
 
-#include "def.h"
+#include "def.hpp"
 
 class Position
 {

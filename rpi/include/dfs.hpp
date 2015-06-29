@@ -1,15 +1,15 @@
-#ifndef DEPTH_FIRST_SEARCH
-#define DEPTH_FIRST_SEARCH
+#ifndef _DEPTH_FIRST_SEARCH_HPP_
+#define _DEPTH_FIRST_SEARCH_HPP_
 
 #include <iostream>
-#include "position.h"
-#include "pathNode.h"
 #include <stack>
 #include <vector>
 #include <queue>
 #include <map>
 #include <utility>
 
+#include "position.hpp"
+#include "pathNode.hpp"
 
 class DepthFirstSearch
 {
@@ -60,6 +60,5 @@ class DepthFirstSearch
         bool pathAvailable;
 
 };
-
 
 #endif

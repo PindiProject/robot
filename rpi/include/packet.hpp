@@ -1,9 +1,10 @@
-#ifndef _PACKET_H
-#define _PACKET_H
+#ifndef _PACKET_HPP_
+#define _PACKET_HPP_
 
 #define MAX_PACKETS 16
 
-struct _packet {
+struct _packet
+{
     unsigned char tag;
     unsigned char length;
     unsigned char* value;
@@ -12,7 +13,8 @@ struct _packet {
 typedef struct _packet packet;
 
 /* Cria o pacote com o rótulo, tamanho e valoe especificado */
-packet* packet_create(unsigned char tag, unsigned char length, unsigned char* data);
+packet* packet_create(unsigned char tag, unsigned char length,
+                      unsigned char* data);
 
 /* Destrói um pacote da memória */
 void packet_destroy(packet* p);

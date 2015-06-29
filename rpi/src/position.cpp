@@ -1,4 +1,4 @@
-#include "position.h"
+#include "position.hpp"
 
 Position::Position(int _x, int _y, int _direction, int _cost)
 {

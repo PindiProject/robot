@@ -1,5 +1,5 @@
-#ifndef _DEF_H
-#define _DEF_H
+#ifndef _DEF_HPP_
+#define _DEF_HPP_
 
 typedef unsigned char byte;
 
