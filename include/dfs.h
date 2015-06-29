@@ -4,6 +4,7 @@
 #include <iostream>
 #include "position.h"
 #include "pathNode.h"
+#include "positionComparison.h"
 #include <stack>
 #include <vector>
 #include <queue>
@@ -38,20 +39,11 @@ class DepthFirstSearch
         int pathToLocation();
         void actualizeCost(Position, int, bool);
         int reverseDirection(int);
-
-        class PositionComparison
-        {
-            public:
-                
-                PositionComparison(Position);
-                Position targetPosition;
-                int calculateHeuristic(const int&, const int&) const;
-                bool operator() (const Position&, const Position&) const;
-        };        
+        int findHighestColumn(bool);
 
         std::stack<Position> searchSpace;
         std::stack<Position> path;
-        std::vector<std::vector<int> > visitedPositions;
+        std::map<int, std::map<int, int> > visitedPositions;
         std::map<std::pair<int, int>, std::vector<Position> > positionEdges;
         Position neighbours[4];
         Position valid_neighbours[4];

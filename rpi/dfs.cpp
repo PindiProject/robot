@@ -1,72 +1,99 @@
 #include "dfs.h"
 #include <cstdlib>
-#include <iostream>
 
 const int DepthFirstSearch::INCREASING_SIZE = 50;
-
-DepthFirstSearch::PositionComparison::PositionComparison(Position _targetPosition)
-{
-    targetPosition = _targetPosition;
-}
-
-int 
-DepthFirstSearch::PositionComparison::calculateHeuristic(const int& row, const int& column) const
-{
-    int distance = 1;
-
-    int dx = abs(row - targetPosition.x);
-    int dy = abs(column - targetPosition.y);
-
-    return distance * (dx+dy);
-}    
-
-
-bool
-DepthFirstSearch::PositionComparison::operator() (const Position& p1, const Position& p2) const
-{
-
-    int relativeCost1 = p1.cost + calculateHeuristic(p1.x, p1.y);
-    int relativeCost2 = p2.cost + calculateHeuristic(p2.x, p2.y);
-
-    if(p1.x == targetPosition.x && p1.y == targetPosition.y)
-        return false;
-    else if(p2.x == targetPosition.x && p2.y == targetPosition.y)
-        return true;
-    else if(relativeCost1> relativeCost2)
-        return true;
-    else
-        return false;
-
-}
-        
-
 
 DepthFirstSearch::DepthFirstSearch():pathAvailable(false)
 {
 
 }
 
+int
+DepthFirstSearch::findHighestColumn(bool positive)
+{
+   typedef std::map<int, std::map<int, int> >::iterator matrix_iterator;
+   typedef std::map<int, int>::iterator inner_iterator;
+   int highestColumn = 0;
+
+   for(matrix_iterator iterator = visitedPositions.begin(); iterator != visitedPositions.end(); iterator++) 
+   {
+       for(inner_iterator iterator2 = iterator->second.begin(); iterator2 != iterator->second.end(); iterator2++)
+        {
+            if(!positive)
+            {
+                if(iterator2->first<highestColumn && iterator2->second != 0)
+                    highestColumn = iterator2->first;
+            }
+            else
+            {   if(iterator2->first>highestColumn && iterator2->second != 0)
+                    highestColumn = iterator2->first;
+            }
+
+        }
+    }
+
+   return abs(highestColumn);
+
+}
+
+
 void 
 DepthFirstSearch::display_visited_positions()
 {
-    int row, column;
+   typedef std::map<int, std::map<int, int> >::iterator matrix_iterator;
+   typedef std::map<int, int>::iterator inner_iterator;
+   int highestColumnPos = findHighestColumn(true);
+   int highestColumnNeg = findHighestColumn(false);
+   std::cout<<highestColumnPos<<std::endl;
 
-    for(row =0; row<10; row++)
-    {
-        for(column = 0; column < 10; column++)
+   for(matrix_iterator iterator = visitedPositions.begin(); iterator != visitedPositions.end(); iterator++) 
+   {
+        int x = iterator->first;
+        int anterior = -2;
+        int sum = 0;
+
+       for(inner_iterator iterator2 = iterator->second.begin(); iterator2 != iterator->second.end(); iterator2++)
         {
-            if(visitedPositions[row][column] >= 0){
-                    std::cout<<" "<<visitedPositions[row][column]<<"     ";
-                }
-            else {
-                 std::cout<<visitedPositions[row][column]<<"     ";
-                 }
-        }    
+            int y = iterator2->first;
+            int temp;
 
-        std::cout<<std::endl;
+
+            temp = (y<0)?highestColumnNeg:highestColumnPos;
+            temp -= sum;
+
+            if(anterior<=0 && y>=0)
+                sum = 0;
+
+            if(anterior<=0 && y>=0)
+            {    
+                temp = anterior+1;
+                sum = 0;
+            }
+
+            int numSpaces = abs(temp - abs(y));
+//           std::cout<<x<<" "<<y<<", ";
+            if(!numSpaces)
+                sum++;
+
+            if(abs(abs(anterior) - abs(y)) == 1)
+                numSpaces = 0;
+
+            for(int i = 0; i<numSpaces;i++)
+                std::cout<<"       ";
+
+            if(visitedPositions[x][y] >= 0)
+                std::cout<<" "<<visitedPositions[x][y]<<"     ";
+            else
+                std::cout<<visitedPositions[x][y]<<"     ";
+
+            anterior = y;
+                
+        }
+
+       std::cout<<std::endl;
     }
 
-}   
+}
 
 int
 DepthFirstSearch::init(int x, int y)
@@ -74,11 +101,6 @@ DepthFirstSearch::init(int x, int y)
     int cost = 0;
     Position pos = Position(x, y, Position::FRONT, cost);
     searchSpace.push(pos);
-    
-    visitedPositions.resize(INCREASING_SIZE);
-
-    for(int i =0; i<INCREASING_SIZE; i++)
-        visitedPositions[i].resize(INCREASING_SIZE);
 
     visitedPositions[x][y] = 1;
 
@@ -162,28 +184,28 @@ DepthFirstSearch::getDistance()
     if(pathAvailable)
         pos = actualPosition;
     else
-        return 200; //pos = lastPosition;
+        return 200;
 
-//    std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
+    std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
     std::vector<Position> edges = positionEdges[std::make_pair(pos.x, pos.y)];
     int direction = pos.direction;
 
    
-//    std::cout<<"Pos d: "<<direction<<std::endl;
+    std::cout<<"Pos d: "<<direction<<std::endl;
 
     if(direction != -2)
     {
         for(unsigned int i =0; i<edges.size(); i++)
         {
-        //    std::cout<<edges[i].x<<" "<<edges[i].y<<std::endl;
-        //    std::cout<<edges[i].direction<<std::endl;
+            std::cout<<edges[i].x<<" "<<edges[i].y<<std::endl;
+            std::cout<<edges[i].direction<<std::endl;
             if(direction == edges[i].direction)
                 return edges[i].cost;
         }   
 
     }
     
-    return 32;
+    return 100;
 }    
 
 int
@@ -238,9 +260,6 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
     int obstacle = 0;
     //visitedPositions[x][y] = 1;
 
-    std::cout<<"X: "<<x<<std::endl;
-    std::cout<<"Y: "<<y<<std::endl;
-    std::cout<<"Dir: "<<direction<<std::endl;
     defineStateOrder(direction);
 
     if(!isObstacleAhead)
@@ -258,10 +277,10 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
         tempy += neighbours[i].y;
         direction = neighbours[i].direction;
        
-        if(tempx<0 || tempy<0)
-            continue;
+        //if(tempx<0 || tempy<0)
+        //    continue;
 
-        std::cout<<tempx<<" "<<tempy<<std::endl;
+        //std::cout<<tempx<<" "<<tempy<<std::endl;
         Position p = Position(tempx, tempy, direction, 200);
         positionEdges[std::make_pair(x, y)].push_back(p);
         
@@ -302,7 +321,7 @@ int
 DepthFirstSearch::reverseDirection(int d)
 {
     int direction = 0;
-    //std::cout<< "Direction: "<<d<<std::endl;
+    std::cout<< "Direction: "<<d<<std::endl;
 
     switch(d)
     {
@@ -339,15 +358,10 @@ DepthFirstSearch::createPathToLocation()
     std::cout<<"\ntarget position: \nX: "<<targetPos.x<<"\nY: "<<targetPos.y<<std::endl;
 
     std::priority_queue<Position, std::vector<Position> , PositionComparison > space((PositionComparison(targetPos)));
-    std::vector< std::vector<int> > visited_nodes;
+    std::map<int, std::map<int, int> > visited_nodes;
     PathNode* lastPos;
     PathNode* pastPos = NULL;
     std::vector<PathNode*> closed;
-
-    visited_nodes.resize(INCREASING_SIZE);
-
-    for(int i =0; i<INCREASING_SIZE; i++)
-        visited_nodes[i].resize(INCREASING_SIZE);
 
     int find = 0;
 
@@ -416,9 +430,9 @@ DepthFirstSearch::createPathToLocation()
             path.push(pos);
             temp = temp->parent; 
 
-           //std::cout<<pos.x<<" "<<pos.y<<std::endl;
+           std::cout<<pos.x<<" "<<pos.y<<std::endl;
            // std::cout<<temp->direction<<std::endl;
-           //std::cout<<pos.direction<<std::endl;
+           std::cout<<pos.direction<<std::endl;
     
             if(isNeighbour(pos.x, pos.y))
                 break;
@@ -447,7 +461,7 @@ DepthFirstSearch::pathToLocation()
         lastPosition = actualPosition;
         actualPosition = pos;
         std::cout<<pos.x<<" "<<pos.y<<std::endl;
-        //std::cout<<pos.direction<<std::endl;
+        std::cout<<pos.direction<<std::endl;
         return pos.direction;
     }    
 
@@ -456,7 +470,7 @@ DepthFirstSearch::pathToLocation()
 int
 DepthFirstSearch::nextPosition()
 {
-    //std::cout<<"\n\n"<<( isNeighbour() == true ? "true" : "false")<<std::endl;
+    //std::cout<<"\n\n"<<(isNeighbour() == true?"true":"false")<<std::endl;
 
     if(!searchSpace.empty())
     {
