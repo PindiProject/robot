@@ -205,7 +205,7 @@ DepthFirstSearch::getDistance()
 
     }
     
-    return 100;
+    return 200;
 }    
 
 int
