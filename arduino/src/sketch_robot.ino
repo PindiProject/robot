@@ -16,7 +16,7 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 unsigned char *outBuffer = (unsigned char *) malloc(9*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
 int Step_size = 200;
-int Distance;
+float Distance;
 unsigned char Obstacle = 0;
 unsigned char currentDirection = CMD_MOVE_FORWARD;
 unsigned char inByte;
@@ -53,16 +53,8 @@ void loop()
 	    
     // Move forward checking for obstacles
     for (NSteps=1; NSteps<=Step_size; NSteps++){
-
-        if(Distance > 10 || Distance < 0)
 	    // Moves one step forward
 	    moveForward();
-
-        // there's an object in front of it
-        else{
-            Obstacle = 1;
-            break;
-        }
     }
 
     // Send data and wait for commands
@@ -115,14 +107,35 @@ void loop()
 
 void readUltrasonic()
 {
-    int PulseTime;
+    float PulseTime;
+    float aux[10];
+    float temp = 0;
+    int i;
+    float rpiDistance;
 
-    digitalWrite(initPin, HIGH);
-    delayMicroseconds(10); // must keep the trig pin high for at least 10us
-    digitalWrite(initPin, LOW);
+    for (i=0;i<10;i++){
+        digitalWrite(initPin, HIGH);
+        delayMicroseconds(10); // must keep the trig pin high for at least 10us
+        digitalWrite(initPin, LOW);
 
-    PulseTime = pulseIn(echoPin, HIGH);
-    Distance = PulseTime/58.2; // PaceOfSound = 1/SpeedOfSound = 29.1 us/cm
+        PulseTime = pulseIn(echoPin, HIGH);
+        aux[i] = PulseTime/58.2; // PaceOfSound = 1/SpeedOfSound = 29.1 us/cm
+    }
+
+    for (i=0;i<10;i++){
+	temp = temp + aux[i];
+    }
+    Distance = temp/10;
+
+    rpiDistance = 28.27*Step_size/200; // 2piR = 28.27cm - 200passos
+
+    // Caso haja algum obstaculo antes do que se pretende percorrer
+    if (Distance < rpiDistance){
+	Step_size = (int) Distance*200/28.27;
+	Step_size = Step_size - 50;
+	Obstacle = 1;
+    }
+    // Caso nada seja encontrado, Step_size permanece o mesmo
 }
 
 // 210 seems to be the correct value for 90 degrees (TODO keep cheking)
