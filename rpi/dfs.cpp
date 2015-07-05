@@ -186,19 +186,19 @@ DepthFirstSearch::getDistance()
     else
         return 200;
 
-    std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
+    //std::cout<<"Pos: "<<pos.x<<" "<<pos.y<<std::endl;
     std::vector<Position> edges = positionEdges[std::make_pair(pos.x, pos.y)];
     int direction = pos.direction;
 
    
-    std::cout<<"Pos d: "<<direction<<std::endl;
+    //std::cout<<"Pos d: "<<direction<<std::endl;
 
     if(direction != -2)
     {
         for(unsigned int i =0; i<edges.size(); i++)
         {
-            std::cout<<edges[i].x<<" "<<edges[i].y<<std::endl;
-            std::cout<<edges[i].direction<<std::endl;
+     //       std::cout<<edges[i].x<<" "<<edges[i].y<<std::endl;
+     //       std::cout<<edges[i].direction<<std::endl;
             if(direction == edges[i].direction)
                 return edges[i].cost;
         }   
@@ -219,13 +219,13 @@ DepthFirstSearch::move(bool isObstacleAhead, int distance)
             return nextPosition;
     }
 
-    explore(isObstacleAhead, distance);
+    int obstacle = explore(isObstacleAhead, distance);
 
     if(!searchSpace.empty())
     {
         Position pos = nextPositionData();
 
-        if(isNeighbour(pos.x, pos.y))
+        if(isNeighbour(pos.x, pos.y) && obstacle != -1)
             return searchSpace.top().direction;
         else
         {
@@ -242,7 +242,7 @@ DepthFirstSearch::move(bool isObstacleAhead, int distance)
 int
 DepthFirstSearch::explore(bool isObstacleAhead, int distance)
 {
-    std::cout<<"EXPLORE"<<std::endl;
+ //   std::cout<<"EXPLORE"<<std::endl;
 
     if(searchSpace.empty())
         return -2;
@@ -258,15 +258,19 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
     int y = pos.y;
     int direction = pos.direction;
     int obstacle = 0;
-    //visitedPositions[x][y] = 1;
+    //visitedPositions[x][y] = (visitedPositions[x][y] == -2?1:-1);
 
     defineStateOrder(direction);
 
     if(!isObstacleAhead)
     {
        visitedPositions[x][y] = -1;
+//       std::cout<<"Obstacle: -1"<<std::endl; 
        obstacle = -1;
     }
+
+    visitedPositions[x][y] = (visitedPositions[x][y] == -1)? -1: 1;
+//    std::cout<<"VisitePosition: "<<visitedPositions[x][y]<<std::endl;
 
     for(int i =0; i<4; i++)
     {
@@ -280,16 +284,16 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
         //if(tempx<0 || tempy<0)
         //    continue;
 
-        //std::cout<<tempx<<" "<<tempy<<std::endl;
+ //       std::cout<<tempx<<" "<<tempy<<std::endl;
         Position p = Position(tempx, tempy, direction, 200);
         positionEdges[std::make_pair(x, y)].push_back(p);
         
-        if(visitedPositions[tempx][tempy] == 1)
+        if(visitedPositions[tempx][tempy] == 1 || visitedPositions[tempx][tempy] == -2)
             continue;
    
         if(!obstacle)
         {
-            visitedPositions[tempx][tempy] = (visitedPositions[tempx][tempy] == -1?-1:1);
+            visitedPositions[tempx][tempy] = (visitedPositions[tempx][tempy] == -1?-1:-2);
             searchSpace.push(p);
         }    
     }    
@@ -302,7 +306,6 @@ DepthFirstSearch::explore(bool isObstacleAhead, int distance)
 bool
 DepthFirstSearch::isNeighbour(int x, int y)
 {
-
     for(int i =0;i<4; i++)
     {
         int tempx = valid_neighbours[i].x + actualPosition.x;
@@ -321,7 +324,7 @@ int
 DepthFirstSearch::reverseDirection(int d)
 {
     int direction = 0;
-    std::cout<< "Direction: "<<d<<std::endl;
+ //   std::cout<< "Direction: "<<d<<std::endl;
 
     switch(d)
     {
@@ -353,9 +356,10 @@ DepthFirstSearch::createPathToLocation()
 {
 
     Position targetPos = nextPositionData();
-    std::cout<<"PATH TO LOCATION"<<std::endl;
-    std::cout<<"actual position: \nX: "<<actualPosition.x<<"\nY: "<<actualPosition.y<<std::endl;
-    std::cout<<"\ntarget position: \nX: "<<targetPos.x<<"\nY: "<<targetPos.y<<std::endl;
+//   std::cout<<"PATH TO LOCATION"<<std::endl;
+//   std::cout<<"actual position: \nX: "<<actualPosition.x<<"\nY: "<<actualPosition.y<<std::endl;
+//   std::cout<<"\ntarget position: \nX: "<<targetPos.x<<"\nY: "<<targetPos.y<<std::endl;
+   visitedPositions[targetPos.x][targetPos.y] = 1;
 
     std::priority_queue<Position, std::vector<Position> , PositionComparison > space((PositionComparison(targetPos)));
     std::map<int, std::map<int, int> > visited_nodes;
@@ -393,30 +397,40 @@ DepthFirstSearch::createPathToLocation()
             int cost = positions[i].cost+pos.cost;
 
             //std::cout<<x<<" "<<y<<" "<<cost<<std::endl;
-            if(!visited_nodes[x][y] && visitedPositions[x][y] != -1)
+//            std::cout<<visitedPositions[x][y]<<std::endl;
+            if(!visited_nodes[x][y] && visitedPositions[x][y]==1)
             {
+//                std::cout<<visitedPositions[x][y]<<std::endl;
                 positions[i].cost += pos.cost;
-                space.push(positions[i]);
-                visited_nodes[x][y] = 1;
-                
+
+                if(visitedPositions[pos.x][pos.y] == -1 && x == targetPos.x && y == targetPos.y)
+                {
+                    
+                }
+                else
+                {    
+                    space.push(positions[i]);
+                    visited_nodes[x][y] = 1;
+                }    
             }
-            
+
             PathNode *p = new PathNode(x, y, direction, cost);
             p->parent = parent;
-                
+                    
             closed.push_back(p);
 
             if(x == targetPos.x && y == targetPos.y)
-                lastPos = p;
+               lastPos = p;
 
             pastPos = parent;
+            
         }
     }
 
     if(find)
     {
         PathNode* temp = lastPos;
-        std::cout<<"PATH FIND"<<std::endl;
+  //      std::cout<<"PATH FIND"<<std::endl;
 
         while(true)
         {
@@ -430,11 +444,11 @@ DepthFirstSearch::createPathToLocation()
             path.push(pos);
             temp = temp->parent; 
 
-           std::cout<<pos.x<<" "<<pos.y<<std::endl;
-           // std::cout<<temp->direction<<std::endl;
-           std::cout<<pos.direction<<std::endl;
+    //       std::cout<<pos.x<<" "<<pos.y<<std::endl;
+          // std::cout<<temp->direction<<std::endl;
+   //        std::cout<<pos.direction<<std::endl;
     
-            if(isNeighbour(pos.x, pos.y))
+            if(isNeighbour(pos.x, pos.y) && (visitedPositions[actualPosition.x][actualPosition.y] != -1 || path.size()>1))
                 break;
 
         }
@@ -460,8 +474,8 @@ DepthFirstSearch::pathToLocation()
         path.pop();
         lastPosition = actualPosition;
         actualPosition = pos;
-        std::cout<<pos.x<<" "<<pos.y<<std::endl;
-        std::cout<<pos.direction<<std::endl;
+ //       std::cout<<pos.x<<" "<<pos.y<<std::endl;
+ //       std::cout<<pos.direction<<std::endl;
         return pos.direction;
     }    
 
