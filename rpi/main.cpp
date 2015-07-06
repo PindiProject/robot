@@ -8,10 +8,13 @@
 #include <iostream>
 
 #include <unistd.h>
+#include <alsa/asoundlib.h>
+#include <math.h>
 
 using namespace std;
 
 #define RXTX_BUFFER_SIZE 256
+#define ALSA_PCM_NEW_HW_PARAMS_API
 
 void print_bytes(byte* buff, int len) {
 
@@ -22,9 +25,166 @@ void print_bytes(byte* buff, int len) {
     cout << endl;
 }
 
+int clap_detect() {
+  int rc = 0;
+  snd_pcm_t * handle = 0;
+  snd_pcm_hw_params_t * params = 0;
+  unsigned int val = 0;
+  int dir = 0;
+  snd_pcm_uframes_t frames;
+  float * buffer = 0;
+  float seconds = 1;
+  int size = seconds * 44100;
+  int flag_turn = -1;
+
+  /* Open PCM device for recording (capture). */
+  rc = snd_pcm_open(&handle, "plughw:1",
+                    SND_PCM_STREAM_CAPTURE, 0);
+  if (rc < 0) {
+    fprintf(stderr, 
+            "unable to open pcm device: %s\n",
+            snd_strerror(rc));
+    exit(1);
+  }
+  
+  /* Allocate a hardware parameters object. */
+  snd_pcm_hw_params_alloca(&params);
+
+  /* Fill it in with default values. */
+  rc = snd_pcm_hw_params_any(handle, params);
+if(rc < 0)
+{
+    fprintf(stderr, 
+            "unable to open pcm device: %s\n",
+            snd_strerror(rc));
+    exit(1);
+}
+
+  /* Set the desired hardware parameters. */
+
+  /* Interleaved mode */
+  rc = snd_pcm_hw_params_set_access(handle, params,
+                      SND_PCM_ACCESS_RW_INTERLEAVED);
+
+   if (rc < 0)
+{
+	fprintf (stderr, "cannot set access type (%s)\n", snd_strerror (rc));
+	exit (1);
+	}
+
+
+  /* Signed 16-bit little-endian format */
+  rc = snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_FLOAT);
+if (rc < 0)
+{
+	puts ("endian");
+	exit (1);
+}
+
+  /* One channels (mono) */
+  rc = snd_pcm_hw_params_set_channels(handle, params, 1);
+if (rc < 0)
+{
+	puts ("nono");
+	exit (1);
+}
+
+  /* 44100 bits/second sampling rate (CD quality) */
+  val = 44100;
+  rc = snd_pcm_hw_params_set_rate_near(handle, params, 
+                                  &val, &dir);
+if (rc < 0)
+{
+	puts ("bits");
+	exit (1);
+}
+
+  /* Set period size to 32 frames. */
+  frames = 32;
+  rc = snd_pcm_hw_params_set_period_size_near(handle, 
+                              params, &frames, &dir);
+if (rc < 0)
+{
+	puts ("Set");
+	exit (1);
+}
+
+  /* Use a buffer large enough to hold one period */
+  rc = snd_pcm_hw_params_get_period_size(params, &frames, &dir);
+if (rc < 0)
+{
+	puts("buffer");
+	exit (1);
+}
+
+  buffer = (float *) malloc(size*sizeof(float));
+
+  /* We want to loop for 1 seconds */
+  rc = snd_pcm_hw_params_get_period_time(params, &val, &dir);
+if (rc < 0)
+{
+	puts ("buffer");
+	exit (1);
+}
+
+  snd_pcm_prepare ( handle );
+
+  /* Write the parameters to the driver */
+  rc = snd_pcm_hw_params(handle, params);
+  if (rc < 0) {
+    printf("rc error: %d\n", rc);
+    printf("handle %p\n", handle);
+    printf("params %p\n", params);
+
+    fprintf(stderr, "unable to set hw parameters: %s\n", snd_strerror(rc));
+    exit(1);
+  }
+
+  while(1){
+    rc = snd_pcm_readi(handle, buffer, size);
+    if (rc == -EPIPE) {
+      snd_pcm_prepare(handle);
+    }
+
+    int window_small_size = (int) (44100*0.0025);
+
+    int slot;
+    int slot_small;
+    float sum_energy = 0;
+    for(slot = 0; slot < size; slot = slot + window_small_size){
+      sum_energy = 0;
+      for (slot_small = slot; slot_small < slot + window_small_size && 
+        slot_small < size; ++slot_small){
+        sum_energy = sum_energy + sqrt(buffer[slot_small]*buffer[slot_small]);
+      }
+      if (sum_energy > 70.0){
+        flag_turn = flag_turn*(-1);
+        if (flag_turn == 1){
+            printf("%s\n", "Turn on");
+            return 1;
+            break;
+          }else if (flag_turn == -1){
+            printf("%s\n", "Turn off");
+            return -1;
+            break;
+          }
+      }
+    }
+  }
+
+  snd_pcm_drain(handle);
+  snd_pcm_close(handle);
+
+  return 0;
+}
 
 int main() {    
     cout << "Init" << endl;
+
+    int flag_to_turn_on = -1;
+    while(flag_to_turn_on == -1){
+        flag_to_turn_on = clap_detect();
+    }
 
     byte* tx_data;
     byte* rx_data;
