@@ -157,7 +157,8 @@ if (rc < 0)
         slot_small < size; ++slot_small){
         sum_energy = sum_energy + sqrt(buffer[slot_small]*buffer[slot_small]);
       }
-      if (sum_energy > 70.0){
+      //printf("%f/n", sum_energy);
+      if (sum_energy > 15.0){
         flag_turn = flag_turn*(-1);
         if (flag_turn == 1){
             printf("%s\n", "Turn on");

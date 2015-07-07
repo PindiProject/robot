@@ -7,7 +7,7 @@ LDIR =../lib
 
 LIBS= -lm
 
-_DEPS = position.h dfs.h pathNode.h positionComparison.h packet.h serial.h def.h
+DEPS = position.h dfs.h pathNode.h positionComparison.h packet.h serial.h def.h
 DEPS = $(patsubst %,$(IDIR)/%,$(_DEPS))
 
 _OBJ = main.o position.o dfs.o pathNode.o positionComparison.o packet.o serial.o
