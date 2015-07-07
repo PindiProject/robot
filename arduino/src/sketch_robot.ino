@@ -1,5 +1,6 @@
 #include "packet.h"
 #include "def.h"
+#include "NewPing.h"
 #include <Stepper.h>
 #define STEPS 200   //number of steps the stepper motor needs to complete a 360 turn. Used by the Stepper.h header
 
@@ -8,8 +9,14 @@ Stepper stepper_RIGHT(STEPS, 11, 9, 8, 10);
 Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 
 // Pin definitions for HC-SR04
-#define echoPin 12              // the SRF05's echo pin
-#define initPin 13              // the SRF05's init pin
+#define echoPin1 12
+#define initPin1 13
+#define echoPin2 44
+#define initPin2 46
+#define MAX_DISTANCE 30
+
+NewPing sonar1 (initPin1, echoPin1, MAX_DISTANCE);
+NewPing sonar2 (initPin2, echoPin2, MAX_DISTANCE);
 
 // Control for cleaning system
 #define control 2
@@ -20,7 +27,7 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 unsigned char *outBuffer = (unsigned char *) malloc(9*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
 int Step_size = 200;
-long Distance;
+float Distance;
 int Obstacle = 0;
 unsigned char currentDirection = CMD_MOVE_FORWARD;
 unsigned char inByte;
@@ -43,11 +50,6 @@ void setup()
     // Configura control pin
     pinMode(control, OUTPUT);
     
-
-    // Configure ultrasound pins
-    pinMode(initPin, OUTPUT);
-    pinMode(echoPin, INPUT);
-
     while(Wakeup != CMD_WAKEUP){
         Wakeup = Serial.read();
         delay(50);
@@ -139,27 +141,18 @@ void locomotion ()
 
 void readUltrasonic()
 {
-    long PulseTime;
-    long aux[10];
-    long temp = 0;
-    int i;
     long rpiDistance;
+    int uS1 = sonar1.ping_median (10);
+    int uS2 = sonar2.ping_median (10);
+    float Distance1, Distance2;
 
-    for (i=0;i<10;i++){
-        digitalWrite(initPin, LOW);
-	delayMicroseconds (2);
-	digitalWrite(initPin, HIGH);
-        delayMicroseconds(10); // must keep the trig pin high for at least 10us
-        digitalWrite(initPin, LOW);
+    Distance1 = uS1/US_ROUNDTRIP_CM;
+    Distance2 = uS2/US_ROUNDTRIP_CM;
 
-        PulseTime = pulseIn(echoPin, HIGH);
-        aux[i] = PulseTime/58.2; // PaceOfSound = 1/SpeedOfSound = 29.1 us/cm
-    }
-
-    for (i=0;i<10;i++){
-	temp = temp + aux[i];
-    }
-    Distance = temp/10;
+    if (Distance1 != 0 && Distance2 != 0)
+        Distance = Distance1<Distance2 ? Distance1 : Distance2;
+    else
+        Distance = Distance1>Distance2 ? Distance1 : Distance2;
 
     rpiDistance = 28.27*Step_size/200; // 2piR = 28.27cm - 200passos
 
