@@ -11,17 +11,24 @@ Stepper stepper_LEFT(STEPS, 7, 5, 4, 6);
 #define echoPin 12              // the SRF05's echo pin
 #define initPin 13              // the SRF05's init pin
 
+// Control for cleaning system
+#define control 2
+#define PWRLED 3
+
 #define SPEED 20
 
 unsigned char *outBuffer = (unsigned char *) malloc(9*sizeof(outBuffer));
 unsigned char *inBuffer = (unsigned char *) malloc(6*sizeof(inBuffer));
 int Step_size = 200;
-float Distance;
-unsigned char Obstacle = 0;
+long Distance;
+int Obstacle = 0;
 unsigned char currentDirection = CMD_MOVE_FORWARD;
 unsigned char inByte;
 unsigned char rpiDirection;
 int NSteps;
+// Variaveis para monitorar bateria
+long previousMillis = 0;
+long interval = 1000*60;
 
 void setup()
 {
@@ -33,6 +40,10 @@ void setup()
     stepper_RIGHT.setSpeed(SPEED);
     stepper_LEFT.setSpeed(SPEED);
 
+    // Configura control pin
+    pinMode(control, OUTPUT);
+    
+
     // Configure ultrasound pins
     pinMode(initPin, OUTPUT);
     pinMode(echoPin, INPUT);
@@ -43,9 +54,36 @@ void setup()
     }
 
     Serial.write(0xFF);
+    // Ativa succao
+    digitalWrite(control, HIGH);
 }
 
 void loop()
+{
+    int voltage;
+
+    // Parte da locomoção
+    locomotion ();
+
+    // Monitoramento da bateria
+    unsigned long currentMillis = millis();
+ 
+    if(currentMillis - previousMillis > interval) {
+	// save the last time it was initiated 
+	previousMillis = currentMillis;  
+
+	//voltage read 
+	voltage = analogRead(A2);
+	if (voltage < 3.5){
+	    digitalWrite(control, LOW);
+	    digitalWrite(PWRLED, HIGH);
+	    // Volta pra base
+	    while (1);
+	}
+    }
+}
+
+void locomotion ()
 {
     int len = 0;
     // Check whether there's something in front of us
@@ -82,39 +120,35 @@ void loop()
 
     // Getting instructions
     while(Serial.available() > 0){
-    	//Serial.println("Waiting for instructions");
         inByte = Serial.read();
         *(inBuffer + len) = inByte;
         len++;
         delay(200); // Arduino was looping to fast, available needs more time
     }
-    //Serial.println("Instructions received");
     
     rpiDirection = *(inBuffer+2);// TODO just a test
-    Step_size = *(inBuffer+5);
+    Step_size = *(inBuffer+5) & 0xFF;
 
     // Turn to desired direction
     if(rpiDirection != currentDirection){//TODO isso tá zuado porra
         directionDecision();    
-        Obstacle = 0;
     }
-    // Keep going if previous direction is the same as new direction
-    else{
-        // TODO this conditional seems to be useless 
-	Obstacle = 0;
-    }
+
+    Obstacle = 0;
 }
 
 void readUltrasonic()
 {
-    float PulseTime;
-    float aux[10];
-    float temp = 0;
+    long PulseTime;
+    long aux[10];
+    long temp = 0;
     int i;
-    float rpiDistance;
+    long rpiDistance;
 
     for (i=0;i<10;i++){
-        digitalWrite(initPin, HIGH);
+        digitalWrite(initPin, LOW);
+	delayMicroseconds (2);
+	digitalWrite(initPin, HIGH);
         delayMicroseconds(10); // must keep the trig pin high for at least 10us
         digitalWrite(initPin, LOW);
 
@@ -132,7 +166,7 @@ void readUltrasonic()
     // Caso haja algum obstaculo antes do que se pretende percorrer
     if (Distance < rpiDistance){
 	Step_size = (int) Distance*200/28.27;
-	Step_size = Step_size - 50;
+	Step_size = Step_size - 100;
 	Obstacle = 1;
     }
     // Caso nada seja encontrado, Step_size permanece o mesmo
